@@ -1,22 +1,28 @@
-import streamlit as st
-import requests
+import os
+
 import pandas as pd
+import requests
+import streamlit as st
 
 # ----------------------------
 # FastAPI Endpoint
 # ----------------------------
-API_URL = "http://127.0.0.1:8000/predict"  # change this if deployed online
+API_URL = os.getenv("HEART_API_URL", "http://127.0.0.1:8000/predict")
+REQUEST_TIMEOUT_SECONDS = 10
 
 # ----------------------------
 # Streamlit App UI
 # ----------------------------
-st.set_page_config(page_title="Heart Disease Risk Predictor", page_icon="love", layout="wide")
+st.set_page_config(page_title="Heart Disease Risk Predictor", page_icon="❤️", layout="wide")
 
-st.title(" 10-Year CHD Risk Predictor")
-st.markdown("This app uses a Logistic Regression model to predict **10-year Coronary Heart Disease (CHD) risk**.")
+st.title("10-Year CHD Risk Predictor")
+st.caption(f"API endpoint: `{API_URL}`")
+st.markdown(
+    "This app uses a Logistic Regression model to predict **10-year Coronary Heart Disease (CHD) risk**."
+)
 
 st.divider()
-st.header(" Patient Information")
+st.header("Patient Information")
 
 # ----------------------------
 # Input Form
@@ -42,7 +48,7 @@ with st.form("input_form"):
         BMI = st.number_input("BMI", min_value=10.0, max_value=80.0, value=25.0)
         glucose = st.number_input("Glucose Level", min_value=40.0, value=90.0)
 
-    submitted = st.form_submit_button(" Predict Risk")
+    submitted = st.form_submit_button("Predict Risk")
 
 # ----------------------------
 # Prediction Logic
@@ -60,25 +66,30 @@ if submitted:
         "sysBP": sysBP,
         "diaBP": diaBP,
         "BMI": BMI,
-        "glucose": glucose
+        "glucose": glucose,
     }
+
+    if sysBP <= diaBP:
+        st.error("Systolic BP must be greater than diastolic BP.")
+        st.stop()
 
     with st.spinner("Analyzing risk..."):
         try:
-            response = requests.post(API_URL, json=input_data)
-            if response.status_code == 200:
-                result = response.json()
+            response = requests.post(API_URL, json=input_data, timeout=REQUEST_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            result = response.json()
 
-                st.success(" Prediction successful!")
-                st.subheader(f" **Predicted Risk Category:** {'High Risk' if result['predicted_category'] == 1 else 'Low Risk'}")
-                st.metric("Probability of Heart Disease", f"{result['probability']*100:.2f}%")
+            st.success("Prediction successful!")
+            st.subheader(
+                f"Predicted Risk Category: {'High Risk' if result['predicted_category'] == 1 else 'Low Risk'}"
+            )
+            st.metric("Probability of Heart Disease", f"{result['probability'] * 100:.2f}%")
 
-                st.divider()
-                st.markdown("###  Input Summary")
-                st.dataframe(pd.DataFrame([input_data]))
+            st.divider()
+            st.markdown("### Input Summary")
+            st.dataframe(pd.DataFrame([input_data]), use_container_width=True)
 
-            else:
-                st.error(f"Error {response.status_code}: {response.text}")
-
-        except Exception as e:
-            st.error(f" API call failed: {e}")
+        except requests.Timeout:
+            st.error(f"Request timed out after {REQUEST_TIMEOUT_SECONDS}s. Check if the API is running.")
+        except requests.RequestException as exc:
+            st.error(f"API request failed: {exc}")
