@@ -1,20 +1,19 @@
-# End-to-end Heart Disease Prediction Using Logistic Regression
+# End-to-End Heart Disease Prediction Using Logistic Regression
 
-A lightweight end-to-end project that predicts **10-year coronary heart disease (CHD) risk** using a trained Logistic Regression model.
+A lightweight end-to-end project that predicts 10-year coronary heart disease (CHD) risk using a trained Logistic Regression model.
 
-## What is included
-- **FastAPI backend** (`main.py`) for prediction serving.
-- **Streamlit frontend** (`frontend.py`) for interactive inputs.
-- **Trained model artifact** (`model.pkl`).
-- **Training data** (`HeartDisease.csv`) and experimentation notebook.
+## 🚀 What is included
+*   **FastAPI backend** (`main.py`) for prediction serving.
+*   **Streamlit frontend** (`frontend.py`) for interactive user inputs.
+*   **Trained model artifact** (`model.pkl`).
+*   **Training data** (`HeartDisease.csv`) and experimentation notebook.
 
-## Quick start
+## ⚙️ Quick Start
 
-### 1) Install dependencies
+### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-
 ### 2) Run the API
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
